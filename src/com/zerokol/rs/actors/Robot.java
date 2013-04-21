@@ -52,6 +52,8 @@ public class Robot {
 		sensorPoints[sensorSeguimentation - 1] = new Point(origin.getX()
 				+ this.robotImage.getWidth() + this.sensorReach, origin.getY()
 				+ this.robotImage.getHeight() / 2);
+
+		updateSensorLines();
 	}
 
 	public synchronized Rectangle getRectangle() {
@@ -62,34 +64,6 @@ public class Robot {
 		this.robotImage.draw(this.origin.getX(), this.origin.getY());
 
 		g.setColor(Color.red);
-
-		sensorPoints[0]
-				.setX((float) (origin.getX() + this.robotImage.getWidth() / 2 + (Math
-						.cos(Math.toRadians(this.inclination))
-						* this.robotImage.getWidth() / 2)));
-
-		sensorPoints[0]
-				.setY((float) (origin.getY() + this.robotImage.getHeight() / 2 + (Math
-						.sin(Math.toRadians(this.inclination))
-						* this.robotImage.getHeight() / 2)));
-
-		for (int t = 1; t < sensorSeguimentation; t++) {
-			sensorPoints[t].setX((float) (sensorPoints[t - 1].getX() + (Math
-					.cos(Math.toRadians(this.inclination))
-					* this.blockSizeWorld * t)));
-
-			sensorPoints[t].setY((float) (sensorPoints[t - 1].getY() + (Math
-					.sin(Math.toRadians(this.inclination))
-					* this.blockSizeWorld * t)));
-		}
-
-		// sensorPoints[sensorSeguimentation - 1].setX((float)
-		// (sensorPoints[0].getX() + (Math.cos(Math.toRadians(this.inclination))
-		// * this.sensorReach)));
-
-		// sensorPoints[sensorSeguimentation - 1].setY((float)
-		// (sensorPoints[0].getY() + (Math.sin(Math.toRadians(this.inclination))
-		// * this.sensorReach)));
 
 		g.drawLine(sensorPoints[0].getX(), sensorPoints[0].getY(),
 				sensorPoints[sensorSeguimentation - 1].getX(),
@@ -104,6 +78,8 @@ public class Robot {
 		if (this.inclination > 359) {
 			this.inclination = 0;
 		}
+
+		updateSensorLines();
 	}
 
 	public void decreaseRotation() {
@@ -114,6 +90,8 @@ public class Robot {
 		if (this.inclination < 0) {
 			this.inclination = 359;
 		}
+
+		updateSensorLines();
 	}
 
 	public Point getPosition() {
@@ -130,10 +108,12 @@ public class Robot {
 
 	public void setX(float x) {
 		this.origin.setX(x);
+		updateSensorLines();
 	}
 
 	public void setY(float y) {
 		this.origin.setY(y);
+		updateSensorLines();
 	}
 
 	public int getWidth() {
@@ -154,5 +134,27 @@ public class Robot {
 
 	public Point[] getSensorPoints() {
 		return this.sensorPoints;
+	}
+
+	private void updateSensorLines() {
+		sensorPoints[0]
+				.setX((float) (origin.getX() + this.robotImage.getWidth() / 2 + (Math
+						.cos(Math.toRadians(this.inclination))
+						* this.robotImage.getWidth() / 2)));
+
+		sensorPoints[0]
+				.setY((float) (origin.getY() + this.robotImage.getHeight() / 2 + (Math
+						.sin(Math.toRadians(this.inclination))
+						* this.robotImage.getHeight() / 2)));
+
+		for (int t = 1; t < sensorSeguimentation; t++) {
+			sensorPoints[t].setX((float) (sensorPoints[t - 1].getX() + (Math
+					.cos(Math.toRadians(this.inclination))
+					* this.blockSizeWorld * t)));
+
+			sensorPoints[t].setY((float) (sensorPoints[t - 1].getY() + (Math
+					.sin(Math.toRadians(this.inclination))
+					* this.blockSizeWorld * t)));
+		}
 	}
 }

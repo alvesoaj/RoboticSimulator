@@ -314,29 +314,26 @@ public class RoboticSimulator extends BasicGame implements
 		sensorPoints = this.robot.getSensorPoints();
 
 		for (int t = 0; t < sensorPoints.length; t++) {
-			float xNew = sensorPoints[t].getX();
+			int xNew = (int) (Math.ceil(sensorPoints[t].getX()) - this.worldOrigin
+					.getX());
 
-			float yNew = sensorPoints[t].getY();
+			int yNew = (int) (Math.ceil(sensorPoints[t].getY()) - this.worldOrigin
+					.getY());
 
-			xNew -= this.worldOrigin.getX();
-			yNew -= this.worldOrigin.getY();
-
-			// System.out.print("x: " + xNew + ", y: " + yNew + "\n");
-
-			int i = (int) (xNew / blockSizeWorld);
+			int i = xNew / blockSizeWorld;
 			if (i > blockWSize - 1) {
 				i = blockWSize - 1;
 			} else if (i < 0) {
 				i = 0;
 			}
-			int j = (int) (yNew / blockSizeWorld);
+			int j = yNew / blockSizeWorld;
 			if (j > blockHSize - 1) {
 				j = blockHSize - 1;
 			} else if (j < 0) {
 				j = 0;
 			}
 
-			if (testCollision(new Point(xNew, yNew))) {
+			if (testCollision(sensorPoints[t])) {
 				if (this.blockMapMatrix[i][j] != 0) {
 					this.blockMapMatrix[i][j] = 0;
 					toUpMap = true;
