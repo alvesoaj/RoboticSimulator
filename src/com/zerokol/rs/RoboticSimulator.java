@@ -1,7 +1,5 @@
 package com.zerokol.rs;
 
-import java.awt.Shape;
-
 import org.newdawn.slick.BasicGame;
 import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.Graphics;
@@ -15,6 +13,8 @@ import org.newdawn.slick.command.InputProviderListener;
 import org.newdawn.slick.command.KeyControl;
 import org.newdawn.slick.geom.Point;
 import org.newdawn.slick.geom.Rectangle;
+
+import com.zerokol.rs.actors.Robot;
 
 public class RoboticSimulator extends BasicGame implements
 		InputProviderListener {
@@ -37,7 +37,7 @@ public class RoboticSimulator extends BasicGame implements
 	private long elapsedTime = 1;
 	private long period = 10;
 
-	private Image background, world, robot;
+	private Image background, world;
 
 	private Point screenOrigin = new Point(0, 0);
 	private Point worldOrigin = new Point(12, 18);
@@ -45,12 +45,9 @@ public class RoboticSimulator extends BasicGame implements
 	private int worldWidth = 800;
 	private int worldHeight = 600;
 
-	private Point robotPosition = new Point(132, 138);
-	private int robotDirection = 0;
-	private int robotRotation = 1;
+	private Rectangle upWallColl, rightWallColl, downWallColl, leftWallColl;
 
-	private Rectangle upWallColl, rightWallColl, downWallColl, leftWallColl,
-			robotColl;
+	private Robot robot;
 
 	public RoboticSimulator(String title) {
 		super(title);
@@ -76,7 +73,7 @@ public class RoboticSimulator extends BasicGame implements
 
 		this.world = new Image("assets/world.png");
 
-		this.robot = new Image("assets/robot.png");
+		this.robot = new Robot("assets/robot.png", 132, 138);
 
 		this.upWallColl = new Rectangle(this.worldOrigin.getX(),
 				this.worldOrigin.getY(), worldWidth, 30);
@@ -89,11 +86,6 @@ public class RoboticSimulator extends BasicGame implements
 
 		this.leftWallColl = new Rectangle(this.worldOrigin.getX(),
 				this.worldOrigin.getY(), 30, worldHeight);
-
-		this.robotColl = new Rectangle(this.robotPosition.getX(),
-				this.robotPosition.getY(), this.robot.getWidth(),
-				this.robot.getHeight());
-
 	}
 
 	@Override
@@ -103,11 +95,7 @@ public class RoboticSimulator extends BasicGame implements
 
 		this.world.draw(this.worldOrigin.getX(), this.worldOrigin.getY());
 
-		this.robot.draw(this.robotPosition.getX(), this.robotPosition.getY());
-
-		this.robotColl.setBounds(this.robotPosition.getX(),
-				this.robotPosition.getY(), this.robot.getWidth(),
-				this.robot.getHeight());
+		this.robot.drawActor();
 	}
 
 	@Override
@@ -118,59 +106,47 @@ public class RoboticSimulator extends BasicGame implements
 			this.elapsedTime = 0;
 
 			if (this.upPressed) {
-				Point p = new Point(this.robotPosition.getX(),
-						this.robotPosition.getY());
+				Point p = new Point(this.robot.getX(), this.robot.getY());
 
-				p.setX((float) (this.robotPosition.getX() + Math.cos(Math
-						.toRadians(this.robotDirection))));
+				p.setX((float) (this.robot.getX() + Math.cos(Math
+						.toRadians(this.robot.getInclination()))));
 
-				p.setY((float) (this.robotPosition.getY() + Math.sin(Math
-						.toRadians(this.robotDirection))));
+				p.setY((float) (this.robot.getY() + Math.sin(Math
+						.toRadians(this.robot.getInclination()))));
 
 				if (!testCollision(p)
 						&& !testCollision(new Point(p.getX()
 								+ this.robot.getWidth(), p.getY()
 								+ this.robot.getHeight()))) {
-					this.robotPosition.setX(p.getX());
-					this.robotPosition.setY(p.getY());
+					this.robot.setX(p.getX());
+					this.robot.setY(p.getY());
 				}
 			}
 
 			if (this.rightPressed) {
-				this.robot.rotate(this.robotRotation);
-				this.robotDirection += this.robotRotation;
-
-				if (this.robotDirection > 359) {
-					this.robotDirection = 0;
-				}
+				this.robot.increaseRotation();
 			}
 
 			if (this.downPressed) {
-				Point p = new Point(this.robotPosition.getX(),
-						this.robotPosition.getY());
+				Point p = new Point(this.robot.getX(), this.robot.getY());
 
-				p.setX((float) (this.robotPosition.getX() - Math.cos(Math
-						.toRadians(this.robotDirection))));
+				p.setX((float) (this.robot.getX() - Math.cos(Math
+						.toRadians(this.robot.getInclination()))));
 
-				p.setY((float) (this.robotPosition.getY() - Math.sin(Math
-						.toRadians(this.robotDirection))));
+				p.setY((float) (this.robot.getY() - Math.sin(Math
+						.toRadians(this.robot.getInclination()))));
 
 				if (!testCollision(p)
 						&& !testCollision(new Point(p.getX()
 								+ this.robot.getWidth(), p.getY()
 								+ this.robot.getHeight()))) {
-					this.robotPosition.setX(p.getX());
-					this.robotPosition.setY(p.getY());
+					this.robot.setX(p.getX());
+					this.robot.setY(p.getY());
 				}
 			}
 
 			if (this.leftPressed) {
-				this.robot.rotate(-this.robotRotation);
-				this.robotDirection -= this.robotRotation;
-
-				if (this.robotDirection < 0) {
-					this.robotDirection = 359;
-				}
+				this.robot.decreaseRotation();
 			}
 		}
 	}
@@ -211,6 +187,7 @@ public class RoboticSimulator extends BasicGame implements
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private boolean testCollision(Rectangle r) {
 		if (this.collisionRectangleToRetangle(r, this.upWallColl)) {
 			return true;
@@ -261,10 +238,5 @@ public class RoboticSimulator extends BasicGame implements
 			return true;
 		}
 		return false;
-	}
-
-	public static float calculateAngle(float x, float y, float x1, float y1) {
-		double angle = Math.atan2(y - y1, x - x1);
-		return (float) (Math.toDegrees(angle) - 90);
 	}
 }
