@@ -15,6 +15,7 @@ import org.newdawn.slick.command.Command;
 import org.newdawn.slick.command.InputProvider;
 import org.newdawn.slick.command.InputProviderListener;
 import org.newdawn.slick.command.KeyControl;
+import org.newdawn.slick.geom.Circle;
 import org.newdawn.slick.geom.Point;
 import org.newdawn.slick.geom.Rectangle;
 
@@ -41,16 +42,20 @@ public class RoboticSimulator extends BasicGame implements
 	private long elapsedTime = 1;
 	private long period = 15;
 
-	private Image background, world;
+	private Image background, world, stick, ball;
 
 	private Point screenOrigin = new Point(0, 0);
 	private Point worldOrigin = new Point(12, 18);
+	private Point stickOrigin = new Point(150, 400);
+	private Point ballOrigin = new Point(500, 200);
 	private Point blockMapOrigin = new Point(823, 16);
 
 	private int worldWidth = 800;
 	private int worldHeight = 600;
 
-	private Rectangle upWallColl, rightWallColl, downWallColl, leftWallColl;
+	private Rectangle upWallColl, rightWallColl, downWallColl, leftWallColl,
+			stickColl;
+	private Circle ballColl;
 
 	private Robot robot;
 
@@ -91,6 +96,9 @@ public class RoboticSimulator extends BasicGame implements
 
 		this.world = new Image("assets/world.png");
 
+		this.stick = new Image("assets/stick.png");
+		this.ball = new Image("assets/ball.png");
+
 		this.robot = new Robot("assets/robot.png", 132, 138, blockSizeWorld);
 
 		this.upWallColl = new Rectangle(this.worldOrigin.getX(),
@@ -105,6 +113,13 @@ public class RoboticSimulator extends BasicGame implements
 		this.leftWallColl = new Rectangle(this.worldOrigin.getX(),
 				this.worldOrigin.getY(), 30, worldHeight);
 
+		this.stickColl = new Rectangle(this.stickOrigin.getX(),
+				this.stickOrigin.getY(), 600, 20);
+
+		this.ballColl = new Circle(this.ballOrigin.getX()
+				+ this.ball.getWidth() / 2, this.ballOrigin.getY()
+				+ this.ball.getHeight() / 2, this.ball.getWidth() / 2);
+
 		this.blockMap = new Image(worldWidth / blockMapProportion, worldHeight
 				/ blockMapProportion);
 
@@ -115,7 +130,7 @@ public class RoboticSimulator extends BasicGame implements
 
 		for (int i = 0; i < blockWSize; i++) {
 			for (int j = 0; j < blockHSize; j++) {
-				this.blockMapMatrix[i][j] = 126;
+				this.blockMapMatrix[i][j] = 127;
 			}
 		}
 
@@ -131,6 +146,10 @@ public class RoboticSimulator extends BasicGame implements
 				.draw(this.screenOrigin.getX(), this.screenOrigin.getY());
 
 		this.world.draw(this.worldOrigin.getX(), this.worldOrigin.getY());
+
+		this.stick.draw(this.stickOrigin.getX(), this.stickOrigin.getY());
+
+		this.ball.draw(this.ballOrigin.getX(), this.ballOrigin.getY());
 
 		this.blockMap.draw(this.blockMapOrigin.getX(),
 				this.blockMapOrigin.getY());
@@ -149,8 +168,6 @@ public class RoboticSimulator extends BasicGame implements
 
 		if (this.elapsedTime > this.period) {
 			this.elapsedTime = 0;
-
-			checkSensor();
 
 			if (this.upPressed) {
 				Point p = new Point(this.robot.getX(), this.robot.getY());
@@ -195,6 +212,8 @@ public class RoboticSimulator extends BasicGame implements
 			if (this.leftPressed) {
 				this.robot.decreaseRotation();
 			}
+			
+			checkSensor();
 		}
 	}
 
@@ -248,6 +267,9 @@ public class RoboticSimulator extends BasicGame implements
 		if (this.collisionRectangleToRetangle(r, this.leftWallColl)) {
 			return true;
 		}
+		if (this.collisionRectangleToRetangle(r, this.stickColl)) {
+			return true;
+		}
 		return false;
 	}
 
@@ -262,6 +284,12 @@ public class RoboticSimulator extends BasicGame implements
 			return true;
 		}
 		if (this.collisionPointToRetangle(p, this.leftWallColl)) {
+			return true;
+		}
+		if (this.collisionPointToRetangle(p, this.stickColl)) {
+			return true;
+		}
+		if (this.collisionPointToCircle(p, this.ballColl)) {
 			return true;
 		}
 		return false;
@@ -287,6 +315,12 @@ public class RoboticSimulator extends BasicGame implements
 		return false;
 	}
 
+	private boolean collisionPointToCircle(Point p, Circle c) {
+		return Math.pow(p.getX() - c.getCenterX(), 2)
+				+ Math.pow(p.getY() - c.getCenterY(), 2) < Math.pow(
+				c.getRadius(), 2);
+	}
+
 	private void drawBlockMap() throws SlickException {
 		for (int i = 0; i < blockWSize; i++) {
 			for (int j = 0; j < blockHSize; j++) {
@@ -297,7 +331,7 @@ public class RoboticSimulator extends BasicGame implements
 				case 254:
 					this.blockMap.getGraphics().setColor(Color.white);
 					break;
-				case 126:
+				case 127:
 				default:
 					this.blockMap.getGraphics().setColor(Color.gray);
 				}
