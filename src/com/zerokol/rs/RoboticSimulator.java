@@ -69,7 +69,6 @@ public class RoboticSimulator extends BasicGame implements
 	private Font awtFont;
 	private TrueTypeFont fontMedium;
 
-	private Point sensorPoints[];
 	private boolean toUpMap = false;
 
 	public RoboticSimulator(String title) {
@@ -99,7 +98,7 @@ public class RoboticSimulator extends BasicGame implements
 		this.stick = new Image("assets/stick.png");
 		this.ball = new Image("assets/ball.png");
 
-		this.robot = new Robot("assets/robot.png", 132, 138, blockSizeWorld);
+		this.robot = new Robot("assets/robot.png", 132, 138);
 
 		this.upWallColl = new Rectangle(this.worldOrigin.getX(),
 				this.worldOrigin.getY(), worldWidth, 30);
@@ -169,6 +168,8 @@ public class RoboticSimulator extends BasicGame implements
 		if (this.elapsedTime > this.period) {
 			this.elapsedTime = 0;
 
+			checkSensor();
+
 			if (this.upPressed) {
 				Point p = new Point(this.robot.getX(), this.robot.getY());
 
@@ -212,8 +213,6 @@ public class RoboticSimulator extends BasicGame implements
 			if (this.leftPressed) {
 				this.robot.decreaseRotation();
 			}
-			
-			checkSensor();
 		}
 	}
 
@@ -345,13 +344,31 @@ public class RoboticSimulator extends BasicGame implements
 	}
 
 	private void checkSensor() throws SlickException {
-		sensorPoints = this.robot.getSensorPoints();
+		robot.sensorOrigin
+				.setX((float) (robot.origin.getX()
+						+ robot.robotImage.getWidth() / 2 + (Math.cos(Math
+						.toRadians(robot.inclination))
+						* robot.robotImage.getWidth() / 2)));
 
-		for (int t = 0; t < sensorPoints.length; t++) {
-			int xNew = (int) (Math.ceil(sensorPoints[t].getX()) - this.worldOrigin
+		robot.sensorOrigin
+				.setY((float) (robot.origin.getY()
+						+ robot.robotImage.getHeight() / 2 + (Math.sin(Math
+						.toRadians(robot.inclination))
+						* robot.robotImage.getHeight() / 2)));
+
+		for (int t = 1; t < 20; t++) {
+			robot.sensorDestination
+					.setX((float) (robot.sensorOrigin.getX() + (Math.cos(Math
+							.toRadians(robot.inclination))) * t * 5));
+
+			robot.sensorDestination
+					.setY((float) (robot.sensorOrigin.getY() + (Math.sin(Math
+							.toRadians(robot.inclination))) * t * 5));
+
+			int xNew = (int) (Math.ceil(robot.sensorDestination.getX()) - this.worldOrigin
 					.getX());
 
-			int yNew = (int) (Math.ceil(sensorPoints[t].getY()) - this.worldOrigin
+			int yNew = (int) (Math.ceil(robot.sensorDestination.getY()) - this.worldOrigin
 					.getY());
 
 			int i = xNew / blockSizeWorld;
@@ -360,6 +377,7 @@ public class RoboticSimulator extends BasicGame implements
 			} else if (i < 0) {
 				i = 0;
 			}
+
 			int j = yNew / blockSizeWorld;
 			if (j > blockHSize - 1) {
 				j = blockHSize - 1;
@@ -367,7 +385,7 @@ public class RoboticSimulator extends BasicGame implements
 				j = 0;
 			}
 
-			if (testCollision(sensorPoints[t])) {
+			if (testCollision(robot.sensorDestination)) {
 				if (this.blockMapMatrix[i][j] != 0) {
 					this.blockMapMatrix[i][j] = 0;
 					toUpMap = true;
