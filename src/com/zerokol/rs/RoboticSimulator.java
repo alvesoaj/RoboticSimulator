@@ -344,57 +344,65 @@ public class RoboticSimulator extends BasicGame implements
 	}
 
 	private void checkSensor() throws SlickException {
-		robot.sensorOrigin
-				.setX((float) (robot.origin.getX()
-						+ robot.robotImage.getWidth() / 2 + (Math.cos(Math
-						.toRadians(robot.inclination))
-						* robot.robotImage.getWidth() / 2)));
+		int inclination = robot.inclination - 30;
 
-		robot.sensorOrigin
-				.setY((float) (robot.origin.getY()
-						+ robot.robotImage.getHeight() / 2 + (Math.sin(Math
-						.toRadians(robot.inclination))
-						* robot.robotImage.getHeight() / 2)));
+		for (int s = 0; s < 5; s++) {
+			robot.sensorOrigins.get(s).setX(
+					(float) (robot.origin.getX() + robot.robotImage.getWidth()
+							/ 2 + (Math.cos(Math
+							.toRadians(inclination + s * 15))
+							* robot.robotImage.getWidth() / 2)));
 
-		for (int t = 1; t < 20; t++) {
-			robot.sensorDestination
-					.setX((float) (robot.sensorOrigin.getX() + (Math.cos(Math
-							.toRadians(robot.inclination))) * t * 5));
+			robot.sensorOrigins.get(s).setY(
+					(float) (robot.origin.getY() + robot.robotImage.getHeight()
+							/ 2 + (Math.sin(Math
+							.toRadians(inclination + s * 15))
+							* robot.robotImage.getHeight() / 2)));
 
-			robot.sensorDestination
-					.setY((float) (robot.sensorOrigin.getY() + (Math.sin(Math
-							.toRadians(robot.inclination))) * t * 5));
+			for (int t = 1; t < 20; t++) {
+				robot.sensorDestinations.get(s).setX(
+						(float) (robot.sensorOrigins.get(s).getX() + (Math
+								.cos(Math.toRadians(inclination + s * 15)))
+								* t
+								* 5));
 
-			int xNew = (int) (Math.ceil(robot.sensorDestination.getX()) - this.worldOrigin
-					.getX());
+				robot.sensorDestinations.get(s).setY(
+						(float) (robot.sensorOrigins.get(s).getY() + (Math
+								.sin(Math.toRadians(inclination + s * 15)))
+								* t
+								* 5));
 
-			int yNew = (int) (Math.ceil(robot.sensorDestination.getY()) - this.worldOrigin
-					.getY());
+				int xNew = (int) (Math.ceil(robot.sensorDestinations.get(s)
+						.getX()) - this.worldOrigin.getX());
 
-			int i = xNew / blockSizeWorld;
-			if (i > blockWSize - 1) {
-				i = blockWSize - 1;
-			} else if (i < 0) {
-				i = 0;
-			}
+				int yNew = (int) (Math.ceil(robot.sensorDestinations.get(s)
+						.getY()) - this.worldOrigin.getY());
 
-			int j = yNew / blockSizeWorld;
-			if (j > blockHSize - 1) {
-				j = blockHSize - 1;
-			} else if (j < 0) {
-				j = 0;
-			}
-
-			if (testCollision(robot.sensorDestination)) {
-				if (this.blockMapMatrix[i][j] != 0) {
-					this.blockMapMatrix[i][j] = 0;
-					toUpMap = true;
+				int i = xNew / blockSizeWorld;
+				if (i > blockWSize - 1) {
+					i = blockWSize - 1;
+				} else if (i < 0) {
+					i = 0;
 				}
-				break;
-			} else {
-				if (this.blockMapMatrix[i][j] != 254) {
-					this.blockMapMatrix[i][j] = 254;
-					toUpMap = true;
+
+				int j = yNew / blockSizeWorld;
+				if (j > blockHSize - 1) {
+					j = blockHSize - 1;
+				} else if (j < 0) {
+					j = 0;
+				}
+
+				if (testCollision(robot.sensorDestinations.get(s))) {
+					if (this.blockMapMatrix[i][j] != 0) {
+						this.blockMapMatrix[i][j] = 0;
+						toUpMap = true;
+					}
+					break;
+				} else {
+					if (this.blockMapMatrix[i][j] != 254) {
+						this.blockMapMatrix[i][j] = 254;
+						toUpMap = true;
+					}
 				}
 			}
 		}

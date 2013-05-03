@@ -1,5 +1,7 @@
 package com.zerokol.rs.actors;
 
+import java.util.ArrayList;
+
 import org.newdawn.slick.Color;
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Image;
@@ -10,7 +12,10 @@ import org.newdawn.slick.geom.Rectangle;
 public class Robot {
 	public Image robotImage;
 
-	public Point origin, sensorOrigin, sensorDestination;
+	public Point origin;
+
+	public ArrayList<Point> sensorOrigins;
+	public ArrayList<Point> sensorDestinations;
 
 	private Rectangle col;
 
@@ -23,8 +28,13 @@ public class Robot {
 
 		this.origin = new Point(x, y);
 
-		this.sensorOrigin = new Point(x, y);
-		this.sensorDestination = new Point(x, y);
+		sensorOrigins = new ArrayList<Point>();
+		sensorDestinations = new ArrayList<Point>();
+
+		for (int s = 0; s < 5; s++) {
+			sensorOrigins.add(new Point(x, y));
+			sensorDestinations.add(new Point(x, y));
+		}
 
 		this.inclination = 0;
 		this.rotationSpeed = 1;
@@ -42,8 +52,11 @@ public class Robot {
 
 		g.setColor(Color.red);
 
-		g.drawLine(sensorOrigin.getX(), sensorOrigin.getY(),
-				sensorDestination.getX(), sensorDestination.getY());
+		for (int s = 0; s < 5; s++) {
+			g.drawLine(sensorOrigins.get(s).getX(),
+					sensorOrigins.get(s).getY(), sensorDestinations.get(s)
+							.getX(), sensorDestinations.get(s).getY());
+		}
 	}
 
 	public void increaseRotation() {
