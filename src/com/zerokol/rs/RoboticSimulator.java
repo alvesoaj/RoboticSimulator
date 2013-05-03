@@ -44,11 +44,15 @@ public class RoboticSimulator extends BasicGame implements
 
 	private Image background, world, stick, ball;
 
+	private Image blockMap;
+	private Image featureMap;
+
 	private Point screenOrigin = new Point(0, 0);
 	private Point worldOrigin = new Point(12, 18);
 	private Point stickOrigin = new Point(150, 400);
 	private Point ballOrigin = new Point(500, 200);
 	private Point blockMapOrigin = new Point(823, 16);
+	private Point featureMapOrigin = new Point(823, 192);
 
 	private int worldWidth = 800;
 	private int worldHeight = 600;
@@ -59,17 +63,21 @@ public class RoboticSimulator extends BasicGame implements
 
 	private Robot robot;
 
-	private Image blockMap;
 	private int blockSizeWorld = 20;
-	private int blockMapProportion = 4;
-	private int blockSizeMap = blockSizeWorld / blockMapProportion;
 	private int blockWSize, blockHSize;
 	private int blockMapMatrix[][];
+
+	private int smallMapProportion = 4;
+
+	private int blockMapsSize = blockSizeWorld / smallMapProportion;
+
+	private int featureMapMatrix[][];
+	private int featureWSize, featureHSize;
 
 	private Font awtFont;
 	private TrueTypeFont fontMedium;
 
-	private boolean toUpMap = false;
+	private boolean updateBlockMap, updateFeatureMap = false;
 
 	public RoboticSimulator(String title) {
 		super(title);
@@ -119,8 +127,8 @@ public class RoboticSimulator extends BasicGame implements
 				+ this.ball.getWidth() / 2, this.ballOrigin.getY()
 				+ this.ball.getHeight() / 2, this.ball.getWidth() / 2);
 
-		this.blockMap = new Image(worldWidth / blockMapProportion, worldHeight
-				/ blockMapProportion);
+		this.blockMap = new Image(worldWidth / smallMapProportion, worldHeight
+				/ smallMapProportion);
 
 		this.blockWSize = worldWidth / blockSizeWorld;
 		this.blockHSize = worldHeight / blockSizeWorld;
@@ -133,7 +141,22 @@ public class RoboticSimulator extends BasicGame implements
 			}
 		}
 
+		featureWSize = worldWidth / smallMapProportion;
+		featureHSize = worldHeight / smallMapProportion;
+
+		this.featureMap = new Image(featureWSize, featureHSize);
+
+		this.featureMapMatrix = new int[featureWSize][featureHSize];
+
+		for (int i = 0; i < featureWSize; i++) {
+			for (int j = 0; j < featureHSize; j++) {
+				this.featureMapMatrix[i][j] = 254;
+			}
+		}
+
 		drawBlockMap();
+
+		drawFeatureMap();
 
 		awtFont = new Font("Times New Roman", Font.BOLD, 30);
 		fontMedium = new TrueTypeFont(awtFont, false);
@@ -152,6 +175,9 @@ public class RoboticSimulator extends BasicGame implements
 
 		this.blockMap.draw(this.blockMapOrigin.getX(),
 				this.blockMapOrigin.getY());
+
+		this.featureMap.draw(this.featureMapOrigin.getX(),
+				this.featureMapOrigin.getY());
 
 		this.robot.drawActor(g);
 
@@ -335,12 +361,33 @@ public class RoboticSimulator extends BasicGame implements
 					this.blockMap.getGraphics().setColor(Color.gray);
 				}
 
-				this.blockMap.getGraphics().fillRect(blockSizeMap * i,
-						blockSizeMap * j, blockSizeMap * i + blockSizeMap,
-						blockSizeMap * j + blockSizeMap);
+				this.blockMap.getGraphics().fillRect(blockMapsSize * i,
+						blockMapsSize * j, blockMapsSize * i + blockMapsSize,
+						blockMapsSize * j + blockMapsSize);
 			}
 		}
 		this.blockMap.getGraphics().flush();
+	}
+
+	private void drawFeatureMap() throws SlickException {
+		for (int i = 0; i < featureWSize; i++) {
+			for (int j = 0; j < featureHSize; j++) {
+				switch (this.featureMapMatrix[i][j]) {
+				case 0:
+					this.featureMap.getGraphics().setColor(Color.black);
+					break;
+				case 254:
+					this.featureMap.getGraphics().setColor(Color.white);
+					break;
+				case 127:
+				default:
+					this.featureMap.getGraphics().setColor(Color.gray);
+				}
+
+				this.featureMap.getGraphics().fillRect(i, j, i + 1, j + 1);
+			}
+		}
+		this.featureMap.getGraphics().flush();
 	}
 
 	private void checkSensor() throws SlickException {
@@ -395,21 +442,36 @@ public class RoboticSimulator extends BasicGame implements
 				if (testCollision(robot.sensorDestinations.get(s))) {
 					if (this.blockMapMatrix[i][j] != 0) {
 						this.blockMapMatrix[i][j] = 0;
-						toUpMap = true;
+						updateBlockMap = true;
+					}
+
+					int fX = (int) (xNew / smallMapProportion);
+					int fY = (int) (yNew / smallMapProportion);
+
+					if (this.featureMapMatrix[fX][fY] != 0) {
+						this.featureMapMatrix[fX][fY] = 0;
+						updateFeatureMap = true;
 					}
 					break;
 				} else {
 					if (this.blockMapMatrix[i][j] != 254) {
 						this.blockMapMatrix[i][j] = 254;
-						toUpMap = true;
+						
+						
+						updateBlockMap = true;
 					}
 				}
 			}
 		}
 
-		if (toUpMap) {
+		if (updateBlockMap) {
 			drawBlockMap();
-			toUpMap = false;
+			updateBlockMap = false;
+		}
+
+		if (updateFeatureMap) {
+			drawFeatureMap();
+			updateFeatureMap = false;
 		}
 	}
 }
