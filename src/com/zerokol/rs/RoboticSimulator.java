@@ -24,6 +24,10 @@ import com.zerokol.rs.actors.Robot;
 public class RoboticSimulator extends BasicGame implements
 		InputProviderListener {
 
+	private static final int COLOR_BLACK = 0;
+	private static final int COLOR_GRAY = 127;
+	private static final int COLOR_WHITE = 254;
+
 	private GameContainer ggc;
 
 	private InputProvider provider;
@@ -350,13 +354,13 @@ public class RoboticSimulator extends BasicGame implements
 		for (int i = 0; i < blockWSize; i++) {
 			for (int j = 0; j < blockHSize; j++) {
 				switch (this.blockMapMatrix[i][j]) {
-				case 0:
+				case COLOR_BLACK:
 					this.blockMap.getGraphics().setColor(Color.black);
 					break;
-				case 254:
+				case COLOR_WHITE:
 					this.blockMap.getGraphics().setColor(Color.white);
 					break;
-				case 127:
+				case COLOR_GRAY:
 				default:
 					this.blockMap.getGraphics().setColor(Color.gray);
 				}
@@ -373,17 +377,13 @@ public class RoboticSimulator extends BasicGame implements
 		for (int i = 0; i < featureWSize; i++) {
 			for (int j = 0; j < featureHSize; j++) {
 				switch (this.featureMapMatrix[i][j]) {
-				case 0:
+				case COLOR_BLACK:
 					this.featureMap.getGraphics().setColor(Color.black);
 					break;
-				case 254:
+				case COLOR_WHITE:
 					this.featureMap.getGraphics().setColor(Color.white);
 					break;
-				case 127:
-				default:
-					this.featureMap.getGraphics().setColor(Color.gray);
 				}
-
 				this.featureMap.getGraphics().fillRect(i, j, i + 1, j + 1);
 			}
 		}
@@ -440,24 +440,23 @@ public class RoboticSimulator extends BasicGame implements
 				}
 
 				if (testCollision(robot.sensorDestinations.get(s))) {
-					if (this.blockMapMatrix[i][j] != 0) {
-						this.blockMapMatrix[i][j] = 0;
+					if (this.blockMapMatrix[i][j] != COLOR_BLACK) {
+						this.blockMapMatrix[i][j] = COLOR_BLACK;
 						updateBlockMap = true;
 					}
 
 					int fX = (int) (xNew / smallMapProportion);
 					int fY = (int) (yNew / smallMapProportion);
 
-					if (this.featureMapMatrix[fX][fY] != 0) {
-						this.featureMapMatrix[fX][fY] = 0;
+					if (this.featureMapMatrix[fX][fY] != COLOR_BLACK) {
+						this.featureMapMatrix[fX][fY] = COLOR_BLACK;
 						updateFeatureMap = true;
 					}
 					break;
 				} else {
-					if (this.blockMapMatrix[i][j] != 254) {
-						this.blockMapMatrix[i][j] = 254;
-						
-						
+					if (this.blockMapMatrix[i][j] != COLOR_WHITE) {
+						this.blockMapMatrix[i][j] = COLOR_WHITE;
+
 						updateBlockMap = true;
 					}
 				}
