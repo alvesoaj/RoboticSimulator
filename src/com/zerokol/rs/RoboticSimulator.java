@@ -26,7 +26,7 @@ public class RoboticSimulator extends BasicGame implements
 
 	private static final int COLOR_BLACK = 0;
 	private static final int COLOR_GRAY = 127;
-	private static final int COLOR_WHITE = 254;
+	private static final int COLOR_WHITE = 255;
 
 	private GameContainer ggc;
 
@@ -70,6 +70,7 @@ public class RoboticSimulator extends BasicGame implements
 	private int blockSizeWorld = 20;
 	private int blockWSize, blockHSize;
 	private int blockMapMatrix[][];
+	private int blockMapMatrixCopy[][];
 
 	private int smallMapProportion = 4;
 
@@ -138,10 +139,12 @@ public class RoboticSimulator extends BasicGame implements
 		this.blockHSize = worldHeight / blockSizeWorld;
 
 		this.blockMapMatrix = new int[blockWSize][blockHSize];
+		this.blockMapMatrixCopy = new int[blockWSize][blockHSize];
 
 		for (int i = 0; i < blockWSize; i++) {
 			for (int j = 0; j < blockHSize; j++) {
 				this.blockMapMatrix[i][j] = 127;
+				this.blockMapMatrixCopy[i][j] = 0;
 			}
 		}
 
@@ -282,7 +285,6 @@ public class RoboticSimulator extends BasicGame implements
 		}
 	}
 
-	@SuppressWarnings("unused")
 	private boolean testCollision(Rectangle r) {
 		if (this.collisionRectangleToRetangle(r, this.upWallColl)) {
 			return true;
@@ -353,17 +355,10 @@ public class RoboticSimulator extends BasicGame implements
 	private void drawBlockMap() throws SlickException {
 		for (int i = 0; i < blockWSize; i++) {
 			for (int j = 0; j < blockHSize; j++) {
-				switch (this.blockMapMatrix[i][j]) {
-				case COLOR_BLACK:
-					this.blockMap.getGraphics().setColor(Color.black);
-					break;
-				case COLOR_WHITE:
-					this.blockMap.getGraphics().setColor(Color.white);
-					break;
-				case COLOR_GRAY:
-				default:
-					this.blockMap.getGraphics().setColor(Color.gray);
-				}
+				Color c = new Color(this.blockMapMatrix[i][j],
+						this.blockMapMatrix[i][j], this.blockMapMatrix[i][j]);
+
+				this.blockMap.getGraphics().setColor(c);
 
 				this.blockMap.getGraphics().fillRect(blockMapsSize * i,
 						blockMapsSize * j, blockMapsSize * i + blockMapsSize,
@@ -393,6 +388,12 @@ public class RoboticSimulator extends BasicGame implements
 	private void checkSensor() throws SlickException {
 		int inclination = robot.inclination - 30;
 
+		for (int i = 0; i < blockWSize; i++) {
+			for (int j = 0; j < blockHSize; j++) {
+				this.blockMapMatrixCopy[i][j] = 0;
+			}
+		}
+
 		for (int s = 0; s < 5; s++) {
 			robot.sensorOrigins.get(s).setX(
 					(float) (robot.origin.getX() + robot.robotImage.getWidth()
@@ -406,7 +407,7 @@ public class RoboticSimulator extends BasicGame implements
 							.toRadians(inclination + s * 15))
 							* robot.robotImage.getHeight() / 2)));
 
-			for (int t = 1; t < 20; t++) {
+			for (int t = 0; t < 20; t++) {
 				robot.sensorDestinations.get(s).setX(
 						(float) (robot.sensorOrigins.get(s).getX() + (Math
 								.cos(Math.toRadians(inclination + s * 15)))
@@ -441,7 +442,15 @@ public class RoboticSimulator extends BasicGame implements
 
 				if (testCollision(robot.sensorDestinations.get(s))) {
 					if (this.blockMapMatrix[i][j] != COLOR_BLACK) {
-						this.blockMapMatrix[i][j] = COLOR_BLACK;
+						this.blockMapMatrix[i][j] -= this.blockMapMatrix[i][j]
+								* (0.05 * getReliability(
+										robot.sensorDestinations.get(s),
+										robot.sensorOrigins.get(0)));
+
+						if (this.blockMapMatrix[i][j] < COLOR_BLACK) {
+							this.blockMapMatrix[i][j] = COLOR_BLACK;
+						}
+
 						updateBlockMap = true;
 					}
 
@@ -454,8 +463,18 @@ public class RoboticSimulator extends BasicGame implements
 					}
 					break;
 				} else {
-					if (this.blockMapMatrix[i][j] != COLOR_WHITE) {
-						this.blockMapMatrix[i][j] = COLOR_WHITE;
+					if (this.blockMapMatrixCopy[i][j] != 1
+							&& this.blockMapMatrix[i][j] != COLOR_WHITE) {
+						this.blockMapMatrix[i][j] += this.blockMapMatrix[i][j]
+								* (0.05 * getReliability(
+										robot.sensorDestinations.get(s),
+										robot.sensorOrigins.get(0)));
+
+						this.blockMapMatrixCopy[i][j] = 1;
+
+						if (this.blockMapMatrix[i][j] > COLOR_WHITE) {
+							this.blockMapMatrix[i][j] = COLOR_WHITE;
+						}
 
 						updateBlockMap = true;
 					}
@@ -469,8 +488,18 @@ public class RoboticSimulator extends BasicGame implements
 		}
 
 		if (updateFeatureMap) {
-			drawFeatureMap();
+			// drawFeatureMap();
 			updateFeatureMap = false;
 		}
+	}
+
+	double getReliability(Point a, Point b) {
+		return Math.pow(2, -0.05 * getDistance(a, b));
+	}
+
+	int getDistance(Point a, Point b) {
+		return (int) Math.pow(
+				Math.pow(a.getX() - b.getX(), 2)
+						+ Math.pow(a.getY() - b.getY(), 2), 0.5);
 	}
 }
