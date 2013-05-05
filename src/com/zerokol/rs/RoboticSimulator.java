@@ -1,6 +1,7 @@
 package com.zerokol.rs;
 
 import java.awt.Font;
+import java.util.ArrayList;
 
 import org.newdawn.slick.BasicGame;
 import org.newdawn.slick.Color;
@@ -16,8 +17,10 @@ import org.newdawn.slick.command.InputProvider;
 import org.newdawn.slick.command.InputProviderListener;
 import org.newdawn.slick.command.KeyControl;
 import org.newdawn.slick.geom.Circle;
+import org.newdawn.slick.geom.Line;
 import org.newdawn.slick.geom.Point;
 import org.newdawn.slick.geom.Rectangle;
+import org.newdawn.slick.geom.Vector2f;
 
 import com.zerokol.rs.actors.Robot;
 
@@ -25,7 +28,6 @@ public class RoboticSimulator extends BasicGame implements
 		InputProviderListener {
 
 	private static final int COLOR_BLACK = 0;
-	private static final int COLOR_GRAY = 127;
 	private static final int COLOR_WHITE = 255;
 
 	private GameContainer ggc;
@@ -76,7 +78,7 @@ public class RoboticSimulator extends BasicGame implements
 
 	private int blockMapsSize = blockSizeWorld / smallMapProportion;
 
-	private int featureMapMatrix[][];
+	private ArrayList<Line> featureLines;
 	private int featureWSize, featureHSize;
 
 	private Font awtFont;
@@ -153,13 +155,7 @@ public class RoboticSimulator extends BasicGame implements
 
 		this.featureMap = new Image(featureWSize, featureHSize);
 
-		this.featureMapMatrix = new int[featureWSize][featureHSize];
-
-		for (int i = 0; i < featureWSize; i++) {
-			for (int j = 0; j < featureHSize; j++) {
-				this.featureMapMatrix[i][j] = 254;
-			}
-		}
+		this.featureLines = new ArrayList<Line>();
 
 		drawBlockMap();
 
@@ -369,19 +365,22 @@ public class RoboticSimulator extends BasicGame implements
 	}
 
 	private void drawFeatureMap() throws SlickException {
-		for (int i = 0; i < featureWSize; i++) {
-			for (int j = 0; j < featureHSize; j++) {
-				switch (this.featureMapMatrix[i][j]) {
-				case COLOR_BLACK:
-					this.featureMap.getGraphics().setColor(Color.black);
-					break;
-				case COLOR_WHITE:
-					this.featureMap.getGraphics().setColor(Color.white);
-					break;
-				}
-				this.featureMap.getGraphics().fillRect(i, j, i + 1, j + 1);
-			}
+		this.featureMap.getGraphics().setColor(Color.white);
+		this.featureMap.getGraphics()
+				.fillRect(0, 0, featureWSize, featureHSize);
+
+		this.featureMap.getGraphics().setColor(Color.black);
+
+		for (int l = 0; l < featureLines.size(); l++) {
+			// this.featureMap.getGraphics().fill(featureLines.get(l));
+
+			this.featureMap.getGraphics().drawLine(
+					featureLines.get(l).getStart().getX(),
+					featureLines.get(l).getStart().getY(),
+					featureLines.get(l).getEnd().getX(),
+					featureLines.get(l).getEnd().getY());
 		}
+
 		this.featureMap.getGraphics().flush();
 	}
 
@@ -457,10 +456,8 @@ public class RoboticSimulator extends BasicGame implements
 					int fX = (int) (xNew / smallMapProportion);
 					int fY = (int) (yNew / smallMapProportion);
 
-					if (this.featureMapMatrix[fX][fY] != COLOR_BLACK) {
-						this.featureMapMatrix[fX][fY] = COLOR_BLACK;
-						updateFeatureMap = true;
-					}
+					addPointToFeatureMap(new Vector2f(fX, fY));
+
 					break;
 				} else {
 					if (this.blockMapMatrixCopy[i][j] != 1
@@ -488,7 +485,7 @@ public class RoboticSimulator extends BasicGame implements
 		}
 
 		if (updateFeatureMap) {
-			// drawFeatureMap();
+			drawFeatureMap();
 			updateFeatureMap = false;
 		}
 	}
@@ -501,5 +498,51 @@ public class RoboticSimulator extends BasicGame implements
 		return (int) Math.pow(
 				Math.pow(a.getX() - b.getX(), 2)
 						+ Math.pow(a.getY() - b.getY(), 2), 0.5);
+	}
+
+	boolean addPointToFeatureMap(Vector2f p) {
+		if (featureLines.size() == 0) {
+			this.featureLines.add(new Line(p.x, p.y, p.x + 1, p.y + 1));
+		}
+
+		for (int l = 0; l < featureLines.size(); l++) {
+			if (this.featureLines.get(l).distance(p) < 3) {
+				double fromStart = this.featureLines.get(l).getStart()
+						.distance(p);
+				double fromEnd = this.featureLines.get(l).getEnd().distance(p);
+
+				double eachOther = this.featureLines.get(l).getStart()
+						.distance(this.featureLines.get(l).getEnd());
+
+				if (fromStart > eachOther) {
+					this.featureLines.set(l, new Line(this.featureLines.get(l)
+							.getStart(), p));
+				} else if (fromEnd > eachOther) {
+					this.featureLines.set(l,
+							new Line(p, this.featureLines.get(l).getEnd()));
+				} else {
+					this.featureLines.set(l, new Line(this.featureLines.get(l)
+							.getStart(), this.featureLines.get(l).getEnd()));
+				}
+
+				updateFeatureMap = true;
+
+				return false;
+			}
+		}
+
+		this.featureLines.add(new Line(p.x, p.y, p.x + 1, p.y + 1));
+
+		updateFeatureMap = true;
+
+		System.out.println("Linhas: " + featureLines.size());
+
+		Line l = new Line(new Vector2f(0, 0), new Vector2f(50, 0));
+
+		if (l.on(new Vector2f(30, 0))) {
+			System.out.println("D: " + l.distance(new Vector2f(30, 0)));
+		}
+
+		return true;
 	}
 }
