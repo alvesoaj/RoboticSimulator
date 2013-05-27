@@ -281,6 +281,7 @@ public class RoboticSimulator extends BasicGame implements
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private boolean testCollision(Rectangle r) {
 		if (this.collisionRectangleToRetangle(r, this.upWallColl)) {
 			return true;
