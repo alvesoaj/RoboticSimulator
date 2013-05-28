@@ -536,7 +536,7 @@ public class RoboticSimulator extends BasicGame implements
 
 		updateFeatureMap = true;
 
-		System.out.println("Linhas: " + featureLines.size());
+		// System.out.println("Linhas: " + featureLines.size());
 
 		Line l = new Line(new Vector2f(0, 0), new Vector2f(50, 0));
 
