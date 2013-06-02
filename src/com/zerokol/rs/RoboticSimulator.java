@@ -82,6 +82,7 @@ public class RoboticSimulator extends BasicGame implements
 	private int featureWSize, featureHSize;
 
 	private Font awtFont;
+	private TrueTypeFont fontSmall;
 	private TrueTypeFont fontMedium;
 
 	private boolean updateBlockMap, updateFeatureMap = false;
@@ -161,8 +162,11 @@ public class RoboticSimulator extends BasicGame implements
 
 		drawFeatureMap();
 
-		awtFont = new Font("Times New Roman", Font.BOLD, 30);
+		awtFont = new Font("Times New Roman", Font.BOLD, 20);
 		fontMedium = new TrueTypeFont(awtFont, false);
+
+		awtFont = new Font("Times New Roman", Font.BOLD, 15);
+		fontSmall = new TrueTypeFont(awtFont, false);
 	}
 
 	@Override
@@ -184,10 +188,25 @@ public class RoboticSimulator extends BasicGame implements
 
 		this.robot.drawActor(g);
 
-		this.fontMedium.drawString(830, 560, "X: "
+		this.fontMedium.drawString(830, 535, "REAL", Color.black);
+
+		this.fontSmall.drawString(930, 520, "X: "
 				+ (this.robot.getX() - this.worldOrigin.getX()), Color.black);
-		this.fontMedium.drawString(830, 590, "Y: "
+		this.fontSmall.drawString(930, 535, "Y: "
 				+ (this.robot.getY() - this.worldOrigin.getY()), Color.black);
+		this.fontSmall.drawString(930, 550, "Ang.: " + this.robot.inclination,
+				Color.black);
+
+		this.fontMedium.drawString(930, 590, "ODO.", Color.black);
+
+		this.fontSmall.drawString(830, 575, "X: "
+				+ (this.robot.getEncoderX() - this.worldOrigin.getX()),
+				Color.black);
+		this.fontSmall.drawString(830, 590, "Y: "
+				+ (this.robot.getEncoderY() - this.worldOrigin.getY()),
+				Color.black);
+		this.fontSmall.drawString(830, 605, "Ang.: "
+				+ this.robot.encoderInclination, Color.black);
 	}
 
 	@Override
@@ -212,8 +231,14 @@ public class RoboticSimulator extends BasicGame implements
 						&& !testCollision(new Point(p.getX()
 								+ this.robot.getWidth(), p.getY()
 								+ this.robot.getHeight()))) {
+
 					this.robot.setX(p.getX());
 					this.robot.setY(p.getY());
+
+					this.robot.increaseLeftRotation();
+					this.robot.increaseRightRotation();
+
+					this.robot.updateEncoderPosition();
 				}
 			}
 
@@ -236,6 +261,11 @@ public class RoboticSimulator extends BasicGame implements
 								+ this.robot.getHeight()))) {
 					this.robot.setX(p.getX());
 					this.robot.setY(p.getY());
+
+					this.robot.decreaseLeftRotation();
+					this.robot.decreaseRightRotation();
+
+					this.robot.updateEncoderPosition();
 				}
 			}
 
@@ -535,8 +565,6 @@ public class RoboticSimulator extends BasicGame implements
 		this.featureLines.add(new Line(p.x, p.y, p.x + 1, p.y + 1));
 
 		updateFeatureMap = true;
-
-		// System.out.println("Linhas: " + featureLines.size());
 
 		Line l = new Line(new Vector2f(0, 0), new Vector2f(50, 0));
 
